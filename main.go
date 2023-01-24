@@ -7,6 +7,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 var args struct {
@@ -14,7 +15,7 @@ var args struct {
 }
 
 func main() {
-	flag.StringVar(&args.mongoURL, "mongodb", "mongodb://mango:27017", "mongodb address")
+	flag.StringVar(&args.mongoURL, "mongodb", "mongodb://localhost:27017", "mongodb address")
 	flag.Parse()
 
 	ctx := context.Background()
@@ -27,4 +28,7 @@ func main() {
 			log.Fatal(err)
 		}
 	}()
+	if err := client.Ping(ctx, readpref.Primary()); err != nil {
+		log.Fatal(err)
+	}
 }
