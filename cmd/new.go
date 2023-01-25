@@ -7,7 +7,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -28,14 +27,6 @@ func init() {
 	newCmd.Flags().StringVar(&title, "title", "", "ticket title")
 	newCmd.Flags().StringVar(&description, "description", "", "ticket description")
 	rootCmd.AddCommand(newCmd)
-}
-
-type Ticket struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty"`
-	Prefix      string             `bson:"prefix"`
-	Num         int                `bson:"num"`
-	Title       string             `bson:"title"`
-	Description string             `bson:"description"`
 }
 
 func runNew(cmd *cobra.Command, args []string) {
