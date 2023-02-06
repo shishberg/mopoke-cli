@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/juju/errors"
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -26,7 +27,7 @@ func init() {
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		log.Fatal(err)
+		log.Fatal(errors.ErrorStack(err))
 	}
 }
 
@@ -36,14 +37,14 @@ func withMongo(cmd *cobra.Command, do func(context.Context, *mongo.Client) error
 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoURL))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(errors.ErrorStack(err))
 	}
 	defer func() {
 		if err := client.Disconnect(ctx); err != nil {
-			log.Fatal(err)
+			log.Fatal(errors.ErrorStack(err))
 		}
 	}()
 	if err := do(ctx, client); err != nil {
-		log.Fatal(err)
+		log.Fatal(errors.ErrorStack(err))
 	}
 }

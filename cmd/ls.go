@@ -33,7 +33,7 @@ func runLs(cmd *cobra.Command, args []string) {
 		}
 
 		for _, t := range results {
-			fmt.Printf("%s-%03d %s\n", t.Prefix, t.Num, t.Title)
+			fmt.Printf("%s %s\n", t.Name, t.Title)
 		}
 		return nil
 	})
