@@ -47,6 +47,7 @@ func runNew(cmd *cobra.Command, args []string) {
 
 	withMongo(cmd, func(ctx context.Context, client *mongo.Client) error {
 		tickets := client.Database("mopoke").Collection("tickets")
+		relationships := client.Database("mopoke").Collection("rel")
 
 		session, err := client.StartSession()
 		if err != nil {
@@ -60,37 +61,26 @@ func runNew(cmd *cobra.Command, args []string) {
 					Name:        newArgs.name,
 					Title:       newArgs.title,
 					Description: newArgs.description,
-					Rel:         []Rel{},
 				}
 				insertResult, err := tickets.InsertOne(sessCtx, ticket)
 				if err != nil {
 					return nil, errors.Trace(err)
 				}
-				id := insertResult.InsertedID.(primitive.ObjectID)
+				newID := insertResult.InsertedID.(primitive.ObjectID)
 
 				for _, rel := range rels {
 					var other Ticket
 					if err := tickets.FindOne(sessCtx, bson.D{{"name", rel.otherName}}).Decode(&other); err != nil {
 						return nil, errors.Trace(err)
 					}
-					out := Rel{
-						Type:  rel.Type,
-						Other: other.ID,
-						Dir:   rel.Dir,
+					if rel.toOther {
+						rel.From = newID
+						rel.To = other.ID
+					} else {
+						rel.From = other.ID
+						rel.To = newID
 					}
-					in := Rel{
-						Type:  rel.Type,
-						Other: id,
-						Dir:   -rel.Dir,
-					}
-					if _, err := tickets.UpdateByID(sessCtx, id, bson.D{{
-						"$push", bson.D{{"rel", out}},
-					}}); err != nil {
-						return nil, errors.Trace(err)
-					}
-					if _, err := tickets.UpdateByID(sessCtx, other.ID, bson.D{{
-						"$push", bson.D{{"rel", in}},
-					}}); err != nil {
+					if _, err := relationships.InsertOne(sessCtx, rel); err != nil {
 						return nil, errors.Trace(err)
 					}
 				}
@@ -106,21 +96,14 @@ func runNew(cmd *cobra.Command, args []string) {
 }
 
 func parseRel(r string) (Rel, error) {
-	delim := strings.IndexAny(r, "<>:")
+	delim := strings.IndexAny(r, "<>")
 	if delim == -1 {
 		return Rel{}, errors.New("rel must be of the form type<name, type>name or type:name")
 	}
 	rel := Rel{
 		Type:      r[:delim],
 		otherName: r[delim+1:],
-	}
-	switch r[delim] {
-	case '<':
-		rel.Dir = -1
-	case '>':
-		rel.Dir = 1
-	case ':':
-		rel.Dir = 0
+		toOther:   delim == '>',
 	}
 	return rel, nil
 }

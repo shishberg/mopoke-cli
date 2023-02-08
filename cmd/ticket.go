@@ -7,13 +7,13 @@ type Ticket struct {
 	Name        string             `bson:"name"`
 	Title       string             `bson:"title"`
 	Description string             `bson:"description"`
-	Rel         []Rel              `bson:"rel"`
 }
 
 type Rel struct {
-	Type  string             `bson:"type"`
-	Other primitive.ObjectID `bson:"other"`
-	Dir   int                `bson:"dir"`
+	From primitive.ObjectID `bson:"from"`
+	To   primitive.ObjectID `bson:"to"`
+	Type string             `bson:"type"`
 
+	toOther   bool   `bson:"-"`
 	otherName string `bson:"-"`
 }
