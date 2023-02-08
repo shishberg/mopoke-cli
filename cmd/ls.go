@@ -25,7 +25,7 @@ func runLs(cmd *cobra.Command, args []string) {
 		tickets := client.Database("mopoke").Collection("tickets")
 
 		var pipeline mongo.Pipeline
-		if len(args) > 0 {
+		if len(args) > 0 { // TODO: without args should list roots
 			pipeline = append(pipeline, bson.D{{
 				"$match", bson.D{{
 					"name", bson.M{"$in": args},
