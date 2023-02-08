@@ -7,6 +7,9 @@ type Ticket struct {
 	Name        string             `bson:"name"`
 	Title       string             `bson:"title"`
 	Description string             `bson:"description"`
+
+	Rel      []Rel    `bson:"rel"`      // aggregated
+	Children []Ticket `bson:"children"` // aggregated
 }
 
 type Rel struct {

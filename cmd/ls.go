@@ -23,7 +23,34 @@ func init() {
 func runLs(cmd *cobra.Command, args []string) {
 	withMongo(cmd, func(ctx context.Context, client *mongo.Client) error {
 		tickets := client.Database("mopoke").Collection("tickets")
-		cursor, err := tickets.Find(ctx, bson.D{{}})
+
+		var pipeline mongo.Pipeline
+		if len(args) > 0 {
+			pipeline = append(pipeline, bson.D{{
+				"$match", bson.D{{
+					"name", bson.M{"$in": args},
+				}},
+			}})
+		}
+		pipeline = append(pipeline,
+			bson.D{{
+				"$graphLookup", bson.M{
+					"from":             "rel",
+					"startWith":        "$_id",
+					"connectFromField": "to",
+					"connectToField":   "from",
+					"as":               "rel",
+					"maxDepth":         0,
+				},
+			}},
+			bson.D{{"$lookup", bson.M{
+				"from":         "tickets",
+				"localField":   "rel.to",
+				"foreignField": "_id",
+				"as":           "children",
+			}},
+			})
+		cursor, err := tickets.Aggregate(ctx, pipeline)
 		if err != nil {
 			return err
 		}
@@ -34,6 +61,9 @@ func runLs(cmd *cobra.Command, args []string) {
 
 		for _, t := range results {
 			fmt.Printf("%s %s\n", t.Name, t.Title)
+			for _, c := range t.Children {
+				fmt.Printf("  %s %s\n", c.Name, c.Title)
+			}
 		}
 		return nil
 	})
