@@ -12,15 +12,20 @@ type Schema struct {
 }
 
 type TypeSchema struct {
-	Fields map[string]string `bson:"inline"`
+	Fields []Field `bson:"fields"`
+}
+
+type Field struct {
+	Name string
+	Type string
 }
 
 func (s Schema) String() string {
 	var str string
 	for t, ts := range s.Types {
 		str += fmt.Sprintf("%s:\n", t)
-		for f, ft := range ts.Fields {
-			str += fmt.Sprintf("  %s: %s\n", f, ft)
+		for _, f := range ts.Fields {
+			str += fmt.Sprintf("  %s: %s\n", f.Name, f.Type)
 		}
 	}
 	return str
