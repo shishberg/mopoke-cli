@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/shishberg/mopoke-cli/db"
+
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -54,7 +56,7 @@ func runLs(cmd *cobra.Command, args []string) {
 		if err != nil {
 			return err
 		}
-		var results []Ticket
+		var results []db.Ticket
 		if err = cursor.All(ctx, &results); err != nil {
 			return err
 		}

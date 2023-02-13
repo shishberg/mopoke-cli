@@ -6,6 +6,8 @@ import (
 	"log"
 	"strings"
 
+	"github.com/shishberg/mopoke-cli/db"
+
 	"github.com/juju/errors"
 	"github.com/spf13/cobra"
 	"go.mongodb.org/mongo-driver/bson"
@@ -36,7 +38,7 @@ func init() {
 }
 
 func runNew(cmd *cobra.Command, args []string) {
-	var rels []Rel
+	var rels []db.Rel
 	for _, rel := range newArgs.relIn {
 		r, err := parseRel(rel)
 		if err != nil {
@@ -57,7 +59,7 @@ func runNew(cmd *cobra.Command, args []string) {
 
 		result, err := session.WithTransaction(ctx,
 			func(sessCtx mongo.SessionContext) (interface{}, error) {
-				ticket := Ticket{
+				ticket := db.Ticket{
 					Name:        newArgs.name,
 					Title:       newArgs.title,
 					Description: newArgs.description,
@@ -69,11 +71,11 @@ func runNew(cmd *cobra.Command, args []string) {
 				newID := insertResult.InsertedID.(primitive.ObjectID)
 
 				for _, rel := range rels {
-					var other Ticket
-					if err := tickets.FindOne(sessCtx, bson.D{{"name", rel.otherName}}).Decode(&other); err != nil {
+					var other db.Ticket
+					if err := tickets.FindOne(sessCtx, bson.D{{"name", rel.OtherName}}).Decode(&other); err != nil {
 						return nil, errors.Trace(err)
 					}
-					if rel.toOther {
+					if rel.ToOther {
 						rel.From = newID
 						rel.To = other.ID
 					} else {
@@ -95,15 +97,15 @@ func runNew(cmd *cobra.Command, args []string) {
 	})
 }
 
-func parseRel(r string) (Rel, error) {
+func parseRel(r string) (db.Rel, error) {
 	delim := strings.IndexAny(r, "<>")
 	if delim == -1 {
-		return Rel{}, errors.New("rel must be of the form type<name, type>name or type:name")
+		return db.Rel{}, errors.New("rel must be of the form type<name or type>name")
 	}
-	rel := Rel{
+	rel := db.Rel{
 		Type:      r[:delim],
-		otherName: r[delim+1:],
-		toOther:   delim == '>',
+		OtherName: r[delim+1:],
+		ToOther:   delim == '>',
 	}
 	return rel, nil
 }
